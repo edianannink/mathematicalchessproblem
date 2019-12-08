@@ -175,7 +175,7 @@ public class Chess implements ActionListener {
         jtaResult.setText("");
 
         // Create a worker to prevent the GUI from freezing during execution
-        SwingWorker<Void, Void> worker = new SwingWorker<>() {
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() {
                 int AmountOfSolutions;
