@@ -29,11 +29,13 @@ public class Chess implements ActionListener {
     // JButton
     public final JButton jbtnSubmit;
 
-    public Chess() {
+    // Defining JFrame and elements
+    private Chess() {
 
         // Create a new JFrame container.
         JFrame jfrm = new JFrame("Chess Solver");
-        jfrm.setBounds(100, 100, 640, 775);
+        jfrm.setBounds(100, 100, 640, 786); // Windows/Linux:
+        //jfrm.setBounds(100, 100, 640, 778); // MacOS
 
         // Specify FlowLayout for the layout manager.
         jfrm.setLayout(new FlowLayout());
@@ -132,17 +134,18 @@ public class Chess implements ActionListener {
         jlabWhiteSpace.setPreferredSize(new Dimension(500, 10));
         jfrm.add(jlabWhiteSpace);
 
-        // Create the Run button.
+        // Create the result textarea.
         jtaResult = new JTextArea();
-        jtaResult.setPreferredSize(new Dimension(620, 460));
         jtaResult.setEditable(false);
-        jtaResult.setBorder(BorderFactory.createCompoundBorder(jtaResult.getBorder(), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-        jfrm.add(jtaResult);
+        JScrollPane scroll = new JScrollPane(jtaResult);
+        scroll.setPreferredSize(new Dimension(620, 460));
+        scroll.setBorder(BorderFactory.createCompoundBorder(jtaResult.getBorder(), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        jfrm.add(scroll);
 
         jbtnSubmit = new JButton("Run");
         jbtnSubmit.setPreferredSize(new Dimension(626, 40));
-        // Add action listener for the Compare button.
-        jbtnSubmit.addActionListener(this);
+        // Add action listener for the Run button.
+            jbtnSubmit.addActionListener(this);
         jbtnSubmit.setFont(jlabMessage.getFont().deriveFont(Font.BOLD, 14f));
         jfrm.getRootPane().setDefaultButton(jbtnSubmit); //Default frame button
         jfrm.add(jbtnSubmit);
@@ -155,6 +158,7 @@ public class Chess implements ActionListener {
     // Execute event when button is pressed
     public void actionPerformed(ActionEvent ae) {
         int WrongFields = 0;
+        int totalpieces = 0;
 
         // Clearing previous warnings
         jlabLimitRows.setText("");
@@ -163,11 +167,37 @@ public class Chess implements ActionListener {
         jlabLimitBishops.setText("");
 
         // First, confirm that numbers are filled in with the right limits
-        WrongFields = getWrongFields(WrongFields, jtfRows, jlabLimitRows, jtfColumns, jlabLimitColumns);
-        WrongFields = getWrongFields(WrongFields, jtfQueens, jlabLimitQueens, jtfBishops, jlabLimitBishops);
+        if(isNumeric(jtfRows.getText(),1)) {
+            jlabLimitRows.setText("Please enter a number between 1-100");
+            jlabLimitRows.setForeground(Color.red);
+        }
+        else WrongFields += 1;
+        if(isNumeric(jtfColumns.getText(),1)) {
+            jlabLimitColumns.setText("Please enter a number between 1-100");
+            jlabLimitColumns.setForeground(Color.red);
+        }
+        else WrongFields += 1;
+        if(isNumeric(jtfQueens.getText(),0)) {
+            jlabLimitQueens.setText("Please enter a number between 0-100");
+            jlabLimitQueens.setForeground(Color.red);
+        }
+        else WrongFields += 1;
+        if(isNumeric(jtfBishops.getText(),0)) {
+            jlabLimitBishops.setText("Please enter a number between 0-100");
+            jlabLimitBishops.setForeground(Color.red);
+        }
+        else WrongFields += 1;
 
         // Checking if all fields are entered correctly
         if(WrongFields < 4) {
+            return;
+        }
+
+        if((Integer.parseInt(jtfBishops.getText()) + Integer.parseInt(jtfQueens.getText())) > (Integer.parseInt(jtfRows.getText())*Integer.parseInt(jtfColumns.getText()))) {
+            jlabLimitQueens.setText("Nr. of pieces exceed " + (Integer.parseInt(jtfRows.getText())*Integer.parseInt(jtfColumns.getText())) + " squares");
+            jlabLimitQueens.setForeground(Color.red);
+            jlabLimitBishops.setText("Nr. of pieces exceed " + (Integer.parseInt(jtfRows.getText())*Integer.parseInt(jtfColumns.getText())) + " squares");
+            jlabLimitBishops.setForeground(Color.red);
             return;
         }
 
@@ -175,7 +205,7 @@ public class Chess implements ActionListener {
         jtaResult.setText("");
 
         // Create a worker to prevent the GUI from freezing during execution
-        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
             @Override
             protected Void doInBackground() {
                 int AmountOfSolutions;
@@ -226,11 +256,10 @@ public class Chess implements ActionListener {
                 String elapsedtimestring = hours + ":" + minutes + ":" + seconds + ":" + milliseconds;
 
                 // Letting the user know that no solutions were found with filled-in parameters
-                if (NoSolutions) {
-                    jtaResult.setText("No solutions were found with " + FilledInQueens + " queen(s) and " + FilledInBishops + " bishop(s).\n" + "A minimum amount of " + AddedBishops + " bishop(s) had to be added to get " + AmountOfSolutions + " different solutions." + "\nExecution time (HH:MM:SS:ss): " + elapsedtimestring + "\n\nPossible solution:\n\n" + Process.Text + "1 = Queen piece" + "\n2 = Bishop piece" + "\n\n4 = Covered square(s) by Queen(s)" + "\n8 = Covered square(s) by Bishop(s)" + "\n6 = Covered square(s) by 2 pieces or more");
-                } else {
-                    jtaResult.setText("There are " + AmountOfSolutions + " different solutions with " + FilledInQueens + " queen(s) and " + FilledInBishops + " bishop(s)." + "\nExecution time (HH:MM:SS:ss): " + elapsedtimestring + "\n\nPossible solution:\n\n" + Process.Text + "1 = Queen piece" + "\n2 = Bishop piece" + "\n\n4 = Covered square(s) by Queen(s)" + "\n8 = Covered square(s) by Bishop(s)" + "\n6 = Covered square(s) by 2 pieces or more");
-                }
+                if (NoSolutions)
+                    jtaResult.setText("No solutions were found with " + FilledInQueens + " queen(s) and " + FilledInBishops + " bishop(s).\n" + "A minimum amount of " + AddedBishops + " bishop(s) had to be added to get " + AmountOfSolutions + " different solutions." + "\nExecution time (HH:MM:SS:ss): " + elapsedtimestring + "\n\nPossible solutions:\n\n" + Process.Text + "1 = Queen piece" + "\n2 = Bishop piece" + "\n\n4 = Covered square(s) by Queen(s)" + "\n8 = Covered square(s) by Bishop(s)" + "\n6 = Covered square(s) by 2 pieces or more");
+                else
+                    jtaResult.setText("There are " + AmountOfSolutions + " different solutions with " + FilledInQueens + " queen(s) and " + FilledInBishops + " bishop(s)." + "\nExecution time (HH:MM:SS:ss): " + elapsedtimestring + "\n\nPossible solutions:\n\n" + Process.Text + "1 = Queen piece" + "\n2 = Bishop piece" + "\n\n4 = Covered square(s) by Queen(s)" + "\n8 = Covered square(s) by Bishop(s)" + "\n6 = Covered square(s) by 2 pieces or more");
 
                 // Resetting button text and re-enabling button for next execution
                 jbtnSubmit.setText("Run");
@@ -242,7 +271,7 @@ public class Chess implements ActionListener {
                 jtfQueens.setEditable(true);
                 jtfBishops.setEditable(true);
 
-                Process.runonce = true;
+                Process.runtwice = 0;
                 Process.Text.setLength(0);
 
                 return null;
@@ -254,34 +283,18 @@ public class Chess implements ActionListener {
     }
 
     // Method to check if numeric values are added and are between the limits 0-100
-    private int getWrongFields(int wrongFields, JTextField jtfRows, JLabel jlabLimitRows, JTextField jtfColumns, JLabel jlabLimitColumns) {
-        if(isNumeric(jtfRows.getText())) {
-            jlabLimitRows.setText("Please enter a number between 0-100");
-            jlabLimitRows.setForeground(Color.red);
-        }
-        else wrongFields += 1;
-
-        if(isNumeric(jtfColumns.getText())) {
-            jlabLimitColumns.setText("Please enter a number between 0-100");
-            jlabLimitColumns.setForeground(Color.red);
-        }
-        else wrongFields += 1;
-        return wrongFields;
-    }
-
-    // Method to check if numeric values are added and are between the limits 0-100
-    private boolean isNumeric(String strNum) {
-        int bottom_limit = 0;
+    private boolean isNumeric(String strNum, int bottomlimit) {
         int upper_limit = 100;
         try {
             int number = Integer.parseInt(strNum);
-            return !(number >= bottom_limit && number <= upper_limit);
+            return !(number >= bottomlimit && number <= upper_limit);
 
         } catch (NumberFormatException | NullPointerException nfe) {
             return true;
         }
     }
 
+    // Main method
     public static void main(String[] args) {
         // Create the JFrame on the event dispatching thread.
         SwingUtilities.invokeLater(Chess::new);
